@@ -1,0 +1,27 @@
+# PowerShell script to disable PC when a USB drive is inserted
+
+# Function to disable the PC
+function Disable-PC {
+    # Example: Shutdown the PC
+    shutdown /s /t 0
+}
+
+# Monitor for USB drive insertion
+$watcher = New-Object System.Management.ManagementEventWatcher
+$query = "SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2"
+$action = {
+    $event = $EventArgs[0]
+    $instance = $event.NewEvent.InstanceName
+    $instanceID = $instance.Split('\')[-1]
+
+    if ($instanceID -like 'USBSTOR*') {
+        Write-Host "USB drive detected: $instanceID"
+        Disable-PC
+    }
+}
+
+$watcher.Query = $query
+$watcher.EventArrived += $action
+$watcher.Start()
+
+Write-Host "Monitoring for USB drive insertion..."
